@@ -13,7 +13,7 @@ Both parts inherit the spec's core stance: scoring is **judged, not deterministi
 
 ### 1.0 How to read this section
 
-Each subsystem has an **eval matrix**: dimension → what it verifies → method → rubric. "Method" indicates whether the eval is automatable now (seeded fixture, scriptable comparison) or requires human grading against an answer key. All evals that touch the Scanner or Copilot are **judged evals** — pass/partial/fail against a rubric, run by an LLM grader or human reviewer, never string-diffed.
+Each subsystem has an **eval matrix**: dimension → what it verifies → method → rubric. "Method" indicates whether the eval is automatable now (seeded fixture, scriptable comparison) or requires human grading against an answer key. For evals that touch the Scanner or Copilot, score-value and citation-location matching against the answer key is performed **mechanically** (per spec 10.5); free-text dimensions (e.g. justification quality) are **judged evals** - pass/partial/fail against a rubric, run by an LLM grader or human reviewer.
 
 A **grading regression** (an eval that previously passed now fails, or a Pass-rate drop beyond the tolerance in 1.6) fails the CI build, per Section 10.
 

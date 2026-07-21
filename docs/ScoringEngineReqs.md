@@ -1,6 +1,6 @@
 # LEAI — Scoring Engine: Detailed Requirements
 ### Traceability, Justification & Aggregate Score Architecture
-**Companion to:** `FunctionalReqs.md` §7.3–7.4 | **Version:** 1.0
+**Companion to:** `leai-spec.md` §5.2 (Scanner and Scoring Engine) | **Version:** 1.1
 
 ---
 
@@ -12,7 +12,7 @@ This document specifies the **Scoring Engine** in detail — the component respo
 - **Traceable** — every score value at every level can be followed back to the exact clause or statement in the source framework that generated it
 - **Justified** — every score assignment carries a human-readable rationale, citing the specific evidence (or absence of it) found in the artifact
 
-This spec covers the data model, computation rules, justification requirements, display format, and audit expectations for the score engine. It does not re-specify multi-tenancy, memory management, or the ROI dashboard (those are in the main FRD).
+This spec covers the data model, computation rules, justification requirements, display format, and audit expectations for the score engine. It does not re-specify the delivery model, memory management, or the Leadership Dashboard (those are in `leai-spec.md`, the authoritative product spec).
 
 ---
 
@@ -44,7 +44,7 @@ A **Clause Score** is the atomic unit of the scoring system. It asserts whether 
 | **Pass** | 100 | The artifact contains clear, sufficient evidence that the requirement expressed by this clause is met |
 | **Partial** | 50 | The artifact contains some evidence of compliance with this clause, but it is incomplete, ambiguous, or covers only part of the requirement |
 | **Gap** | 0 | The artifact contains no evidence that this clause's requirement is met |
-| **Not Applicable** | excluded | The clause does not apply to this artifact, given its System Profile or an established tenant exception (see §3.6) |
+| **Not Applicable** | excluded | The clause does not apply to this artifact, given its System Profile or an established organizational exception (see §3.6) |
 
 ### 3.3 Required Fields Per Clause Finding
 
@@ -60,9 +60,9 @@ Every clause finding that the agent produces **must** include all of the followi
 | `evidence_location` | string or null | Where in the artifact the evidence was found — e.g. file path + line range for a repo, section heading + page for a document. Null only when `evidence_excerpt` is null. |
 | `justification` | string | A clear, human-readable statement explaining **why** this specific evidence (or absence of it) produces this specific score. Must address the gap between what the clause requires and what the artifact demonstrates. See §3.4. |
 | `confidence` | enum | High / Medium / Low — the agent's self-assessed confidence in the justification (see §3.5) |
-| `memory_carry` | boolean | `true` if this finding was carried from tenant memory rather than derived from fresh artifact analysis (see §3.6) |
+| `memory_carry` | boolean | `true` if this finding was carried from memory rather than derived from fresh artifact analysis (see §3.6) |
 | `memory_carry_note` | string or null | If `memory_carry = true`, a brief note stating the prior session in which this finding was first established and what confirmed it then. Required when `memory_carry = true`. |
-| `regression_flag` | boolean | `true` if this finding contradicts a prior passing or N/A finding in tenant memory (see §3.7) |
+| `regression_flag` | boolean | `true` if this finding contradicts a prior passing or N/A finding in memory (see §3.7) |
 | `regression_note` | string or null | Required when `regression_flag = true`. States what the previous finding was, what has changed, and what the agent believes caused the contradiction. |
 
 ### 3.4 Justification Requirements
@@ -99,7 +99,7 @@ Any finding scored at Low confidence must appear in the scan report's **Review R
 
 ### 3.6 Memory-Carried Findings
 
-When a clause was previously found to be N/A or Pass based on a durable tenant exception (e.g. "self-hosted models only — data-transfer clauses N/A"), and the new artifact provides no contradicting evidence, the agent may carry the finding forward from memory rather than re-deriving it from scratch.
+When a clause was previously found to be N/A or Pass based on a durable organizational exception (e.g. "self-hosted models only — data-transfer clauses N/A"), and the new artifact provides no contradicting evidence, the agent may carry the finding forward from memory rather than re-deriving it from scratch.
 
 Memory-carried findings are **not exempt from traceability**. They must still populate all required fields, with:
 
@@ -231,7 +231,7 @@ The scan report is the deliverable of the scoring engine. It must present findin
 
 ### 7.1 Report Header
 
-- Tenant name (never another tenant's data)
+- Organization name
 - Artifact reference (repo URL, document name, or upload filename)
 - Scan timestamp
 - Frameworks applied (name + version for each)
@@ -278,8 +278,8 @@ For each category (ordered by category score ascending — worst first):
 
 ### 7.6 Memory Update Log
 
-- What the agent wrote to tenant memory as a result of this scan
-- What the agent updated or downgraded in tenant memory
+- What the agent wrote to memory as a result of this scan
+- What the agent updated or downgraded in memory
 - What the agent flagged for human confirmation before committing to memory
 - This section is always present, even if the only entry is "No memory changes."
 
@@ -309,7 +309,7 @@ An N/A determination must always be justified. The justification must:
 
 1. State which characteristic of the System Profile makes the clause inapplicable.
 2. Cite the System Profile element that supports this (e.g. "System Profile: deployment is on-premises, no external API calls — data transfer clauses inapplicable").
-3. Or, if carried from tenant memory: cite the prior session and exception record.
+3. Or, if carried from memory: cite the prior session and exception record.
 
 N/A is not a default or fallback for uncertainty. If the agent is uncertain whether a clause applies, the score is Gap with `confidence = Low`, not N/A.
 
@@ -361,20 +361,20 @@ The audit trail is accessible to Auditor-role users and is never deletable by an
 
 ### 10.1 Framework Reference Data
 
-The Scoring Engine reads clause lists from platform-wide Framework Reference Data (defined in FunctionalReqs.md §10.3). Each clause record must carry `category_tag` and `risk_weight` for the engine to function. These fields are mandatory in the framework data model.
+The Scoring Engine reads clause lists from the shared Framework Reference Data (defined in `leai-spec.md` §8.3 and the Framework entity in §8). Each clause record must carry `category_tag` and `risk_weight` for the engine to function. These fields are mandatory in the framework data model.
 
-### 10.2 Tenant Memory Store
+### 10.2 Memory Store
 
 The engine calls the memory store twice per scan:
 
 1. **Read (Recall):** before scoring, to load prior exceptions, accepted risk justifications, and prior clause findings.
 2. **Write (Update):** after scoring, to commit new durable facts, update existing ones, and flag items needing human confirmation.
 
-The memory interface must be tenant-scoped at the data layer (not just the API call) per FunctionalReqs.md §6.4.
+The memory interface is a single-enterprise store scoped per system via metadata keys, per `leai-spec.md` §5.5 and §6.
 
-### 10.3 ROI Dashboard
+### 10.3 Leadership Dashboard
 
-After a scan completes, the engine pushes the following to the tenant's ROI Dashboard:
+After a scan completes, the engine pushes the following to the Leadership Dashboard:
 
 - Overall score (numeric + band)
 - Per-category scores

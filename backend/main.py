@@ -25,10 +25,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from backend import copilot as copilot_module
 from backend import rollup
+from backend.memory import InMemoryMemoryStore, JsonFileMemoryStore, MemoryStore
 from backend.models import (
     MODEL_ID,
-    CopilotCitation,
     CopilotRequest,
     CopilotResponse,
     DashboardResponse,
@@ -47,7 +48,8 @@ from backend.registry import InvalidTransition, NotFound, Registry
 
 RULEPACK_DIR = Path(__file__).resolve().parent / "rulepacks"
 
-ScannerFn = Callable[[str, list[str], str], Awaitable[Scan]]
+# (artifact_ref, framework_ids, system_id, *, store=...) -> Scan
+ScannerFn = Callable[..., Awaitable[Scan]]
 
 
 # ---------------------------------------------------------------------------
@@ -144,6 +146,28 @@ def build_stub_scan(
     )
 
 
+def select_memory_store() -> MemoryStore:
+    """Shared per-system memory store for scanner and copilot. JSON-file
+    backed when LEAI_MEMORY points at a path, else in-process."""
+    path = os.environ.get("LEAI_MEMORY")
+    if path:
+        return JsonFileMemoryStore(path)
+    return InMemoryMemoryStore()
+
+
+def select_copilot() -> tuple[str, copilot_module.Answerer | None]:
+    """Returns (mode, live_answerer_or_None). Stub (deterministic grounded
+    answers, no API key) is the default; LEAI_COPILOT=live uses the Anthropic
+    SDK and falls back to stub if the SDK or key is unavailable."""
+    mode = os.environ.get("LEAI_COPILOT", "stub").lower()
+    if mode == "live":
+        try:
+            return "live", copilot_module.AnthropicCopilot()
+        except Exception:
+            return "stub", None
+    return "stub", None
+
+
 def select_scanner() -> tuple[str, ScannerFn | None]:
     """Returns (mode, live_run_scan_or_None). Stub is the default and the
     fallback when backend/scanner.py is not importable."""
@@ -186,10 +210,14 @@ def create_app(db_url: str | None = None) -> FastAPI:
     registry = Registry(db_url or os.environ.get("LEAI_DB", "sqlite:///backend/leai.db"))
     seed_demo_system(registry)
     scanner_mode, live_run_scan = select_scanner()
+    copilot_mode, live_answerer = select_copilot()
+    memory_store = select_memory_store()
 
     app = FastAPI(title="LEAI", version="0.1.0")
     app.state.registry = registry
     app.state.scanner_mode = scanner_mode
+    app.state.copilot_mode = copilot_mode
+    app.state.memory_store = memory_store
 
     app.add_middleware(
         CORSMiddleware,
@@ -213,7 +241,11 @@ def create_app(db_url: str | None = None) -> FastAPI:
         try:
             registry.mark_scan_running(scan_id, "Scoring frameworks...")
             if live_run_scan is not None:
-                scan = await live_run_scan(artifact_ref, framework_ids, system_id)
+                # backend.scanner.run_scan accepts the shared store so the
+                # copilot recalls what the scanner learned.
+                scan = await live_run_scan(
+                    artifact_ref, framework_ids, system_id, store=memory_store
+                )
                 # Registry assigns the id; the scanner may not know it.
                 scan = scan.model_copy(update={"id": scan_id, "system_id": system_id})
             else:
@@ -330,50 +362,21 @@ def create_app(db_url: str | None = None) -> FastAPI:
             open_gap_count=counts["open_gap_count"],
         )
 
-    # -- copilot (canned grounded answer; Task I replaces this) --------------
+    # -- copilot (leai-spec 5.5; grounded in records + memory + rulepacks) ---
 
     @app.post("/copilot", response_model=CopilotResponse)
     async def copilot(body: CopilotRequest):
-        scan: Scan | None = None
-        if body.system_id is not None:
-            try:
-                scan = registry.latest_scan_for_system(body.system_id)
-            except NotFound as exc:
-                return _error(404, "system_not_found", str(exc))
-        else:
-            for system in registry.list_systems():
-                if system.latest_scan_id is not None:
-                    scan = registry.get_scan(system.latest_scan_id)
-                    break
-        if scan is None:
-            return CopilotResponse(
-                answer=(
-                    "No scan records exist for that scope yet, so there is "
-                    "nothing to ground an answer in. Run a scan first."
-                ),
-                citations=[],
-                model_id=MODEL_ID,
+        try:
+            return copilot_module.answer_question(
+                body.question,
+                body.system_id,
+                registry=registry,
+                store=memory_store,
+                rulepacks=RULEPACKS,
+                answerer=live_answerer,
             )
-        gaps = [f for f in scan.findings if f.score_value == "gap"]
-        answer = (
-            f"Grounded in scan {scan.id} ({scan.band}, {scan.overall_score}): "
-            f"{len(gaps)} open gap(s) recorded. "
-            + (
-                "Address the cited gaps before shipping."
-                if gaps
-                else "No open gaps are recorded against this system."
-            )
-        )
-        citations = [
-            CopilotCitation(
-                label=f"Scan {scan.id} - {f.clause_ref}",
-                scan_id=scan.id,
-                system_id=scan.system_id,
-                clause_ref=f.clause_ref,
-            )
-            for f in gaps[:5]
-        ]
-        return CopilotResponse(answer=answer, citations=citations, model_id=MODEL_ID)
+        except NotFound as exc:
+            return _error(404, "system_not_found", str(exc))
 
     return app
 

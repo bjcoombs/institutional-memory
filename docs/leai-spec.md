@@ -1,7 +1,7 @@
 # LEAI — Enterprise AI Governance Platform
 
 Product Specification
-Version: 1.0 (merged — supersedes `leah-prd.md` and `FunctionalReqs.md`)
+Version: 1.0 (merged — supersedes `docs/archive/leah-prd.md` and `docs/archive/FunctionalReqs.md`)
 Date: 2026-07-21
 
 ## 1. Problem Statement
@@ -269,4 +269,4 @@ v1 is successful when, on a real enterprise deployment:
 
 ---
 
-*This document supersedes `docs/leah-prd.md` and `FunctionalReqs.md`, which are retained for historical reference.*
+*This document supersedes `docs/archive/leah-prd.md` and `docs/archive/FunctionalReqs.md`, which are retained in `docs/archive/` for historical reference only. This spec is the single authoritative version.*

@@ -6,10 +6,10 @@ and bands):
 - Numeric mapping: pass = 100, partial = 50, gap = 0 (ScoringEngineReqs 3.2).
 - "na" findings are excluded from every denominator. A category whose
   findings are all "na" is itself N/A and excluded from the overall score.
-- Category score is the risk-weighted mean of its non-N/A clause findings,
-  using each clause's risk_weight from the framework rulepack
-  (ScoringEngineReqs 10.1). Equal risk weights reduce to the plain mean of
-  4.2 exactly.
+- Category score is the plain mean of the non-N/A numeric_values of its
+  clause findings (ScoringEngineReqs 4.2). Rulepack risk_weight is carried
+  as reference data for prioritization and display only; it never enters
+  the scoring arithmetic.
 - Overall score is the weighted mean of category scores; equal category
   weights by default, caller-supplied weights otherwise (ScoringEngineReqs
   5.1).
@@ -31,7 +31,9 @@ from backend.models import Band, CategoryScore, ClauseFinding
 @dataclass(frozen=True)
 class ClauseMeta:
     """Per-clause reference data from the framework rulepack
-    (ScoringEngineReqs 10.1): category_tag and risk_weight are mandatory."""
+    (ScoringEngineReqs 10.1): category_tag and risk_weight are mandatory.
+    risk_weight is prioritization/display metadata only - category scoring
+    uses the plain 4.2 mean and ignores it."""
 
     category_tag: str
     risk_weight: float
@@ -58,7 +60,8 @@ def category_scores(
     findings: Iterable[ClauseFinding],
     clause_meta: Mapping[str, ClauseMeta],
 ) -> list[CategoryScore]:
-    """Group findings into categories and compute risk-weighted scores.
+    """Group findings into categories and compute plain-mean scores
+    (ScoringEngineReqs 4.2).
 
     clause_meta maps clause_ref -> ClauseMeta (from the rulepacks). A finding
     whose clause_ref has no meta entry is a data-integrity error and raises:
@@ -84,17 +87,9 @@ def category_scores(
         scored = [f for f in members if f.score_value != "na"]
         if not scored:
             continue  # all-N/A category: excluded entirely
-        weight_sum = 0.0
-        weighted_value_sum = 0.0
-        for f in scored:
-            rw = clause_meta[f.clause_ref].risk_weight
-            if rw <= 0:
-                raise ValueError(
-                    f"risk_weight must be positive for {f.clause_ref!r}"
-                )
-            weight_sum += rw
-            weighted_value_sum += rw * float(f.numeric_value)  # never None here
-        score = round1(weighted_value_sum / weight_sum)
+        score = round1(
+            sum(float(f.numeric_value) for f in scored) / len(scored)
+        )  # numeric_value is never None for non-na findings
         result.append(
             CategoryScore(
                 category_name=category_name,

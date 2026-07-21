@@ -212,11 +212,11 @@ export function mockScanRound1(): Scan {
         confidence: "medium",
       }),
       finding({
-        clause_ref: "EU AI Act (2024), Article 52, Paragraph 1",
+        clause_ref: "EU AI Act (2024), Article 50, Paragraph 1",
         score_value: "gap",
         numeric_value: 0,
         justification:
-          "Article 52 requires that people are informed they are interacting with an AI system. A search of the user-facing templates, API docs, and web copy found no disclosure that scoring is automated. No user-facing AI disclosure exists anywhere in the artifact.",
+          "Article 50 requires that people interacting directly with an AI system are informed of that fact. A search of the user-facing templates, API docs, and web copy found no disclosure that scoring is automated. No user-facing AI disclosure exists anywhere in the artifact.",
         confidence: "high",
       }),
       finding({
@@ -231,11 +231,11 @@ export function mockScanRound1(): Scan {
         confidence: "high",
       }),
       finding({
-        clause_ref: "ISO/IEC 42001:2023, Clause 10.1",
+        clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.8.4",
         score_value: "gap",
         numeric_value: 0,
         justification:
-          "Clause 10.1 requires a defined process for identifying, recording, and responding to AI-related incidents. A search for incident-response documentation, runbooks, and on-call procedures found no relevant content in the artifact.",
+          "Control A.8.4 requires a documented plan for handling AI system incidents and communicating them to users and interested parties. A search for incident-response documentation, runbooks, and on-call procedures found no relevant content in the artifact.",
         confidence: "high",
       }),
       finding({
@@ -323,14 +323,14 @@ export function mockScanGreen(): Scan {
         confidence: "high",
       }),
       finding({
-        clause_ref: "EU AI Act (2024), Article 52, Paragraph 1",
+        clause_ref: "EU AI Act (2024), Article 50, Paragraph 1",
         score_value: "pass",
         numeric_value: 100,
         evidence_excerpt:
           "Your application is assessed by an automated credit-scoring system.",
         evidence_location: "templates/decision-email.html:3-9",
         justification:
-          "Article 52 requires disclosure of AI interaction. The decision email template (lines 3-9) now discloses automated assessment to every applicant, resolving the prior gap.",
+          "Article 50 requires disclosure of AI interaction. The decision email template (lines 3-9) now discloses automated assessment to every applicant, resolving the prior gap.",
         confidence: "high",
       }),
       finding({
@@ -348,14 +348,14 @@ export function mockScanGreen(): Scan {
           "Established in scan_r1 (2026-07-21) from docs/risk-register.md:1-40; unchanged since.",
       }),
       finding({
-        clause_ref: "ISO/IEC 42001:2023, Clause 10.1",
+        clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.8.4",
         score_value: "pass",
         numeric_value: 100,
         evidence_excerpt:
           "Incident severity levels, on-call rota, and model-rollback procedure.",
         evidence_location: "docs/incident-runbook.md:1-58",
         justification:
-          "Clause 10.1 requires a defined AI incident-response process. docs/incident-runbook.md (lines 1-58) now defines severity levels, an on-call rota, and rollback steps, resolving the round 1 gap.",
+          "Control A.8.4 requires a documented AI incident-response and communication plan. docs/incident-runbook.md (lines 1-58) now defines severity levels, an on-call rota, and rollback steps, resolving the round 1 gap.",
         confidence: "high",
       }),
       finding({
@@ -396,14 +396,25 @@ export function mockScanRegression(): Scan {
     artifact_ref: "demo/round2 at 7b6c5d4",
     findings: [
       finding({
-        clause_ref: "EU AI Act (2024), Article 52, Paragraph 1",
+        clause_ref: "EU AI Act (2024), Article 13, Paragraph 1",
+        score_value: "partial",
+        numeric_value: 50,
+        evidence_excerpt:
+          "The service returns a credit score between 300 and 850 with a risk tier.",
+        evidence_location: "docs/api.md:12-18",
+        justification:
+          "Article 13 requires instructions that let deployers interpret outputs. The output format documented in docs/api.md (lines 12-18) is unchanged since scan_r1 and still lacks interpretation guidance, so the finding stays Partial.",
+        confidence: "medium",
+      }),
+      finding({
+        clause_ref: "EU AI Act (2024), Article 50, Paragraph 1",
         score_value: "pass",
         numeric_value: 100,
         evidence_excerpt:
           "Your application is assessed by an automated credit-scoring system.",
         evidence_location: "templates/decision-email.html:3-9",
         justification:
-          "Article 52 requires disclosure of AI interaction. The decision email template (lines 3-9) now discloses automated assessment, resolving the gap recorded in scan_r1.",
+          "Article 50 requires disclosure of AI interaction. The decision email template (lines 3-9) now discloses automated assessment, resolving the gap recorded in scan_r1.",
         confidence: "high",
       }),
       finding({
@@ -432,14 +443,14 @@ export function mockScanRegression(): Scan {
           "Previously Pass in scan_r1 (src/pipeline/review.py:8-31, mandatory analyst review). The review queue call was deleted in round 2; likely removed during the throughput refactor. Oversight evidence no longer exists.",
       }),
       finding({
-        clause_ref: "ISO/IEC 42001:2023, Clause 10.1",
+        clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.8.4",
         score_value: "pass",
         numeric_value: 100,
         evidence_excerpt:
           "Incident severity levels, on-call rota, and model-rollback procedure.",
         evidence_location: "docs/incident-runbook.md:1-58",
         justification:
-          "Clause 10.1 requires a defined AI incident-response process. docs/incident-runbook.md (lines 1-58) now provides one, resolving the round 1 gap.",
+          "Control A.8.4 requires a documented AI incident-response and communication plan. docs/incident-runbook.md (lines 1-58) now provides one, resolving the round 1 gap.",
         confidence: "high",
       }),
     ],
@@ -447,11 +458,11 @@ export function mockScanRegression(): Scan {
       {
         category_name: "Transparency",
         source_frameworks: ["EU AI Act"],
-        clause_count: 1,
+        clause_count: 2,
         clause_pass_count: 1,
-        clause_partial_count: 0,
+        clause_partial_count: 1,
         clause_gap_count: 0,
-        category_score_numeric: 100.0,
+        category_score_numeric: 75.0,
         category_score_band: "green",
       },
       {
@@ -485,8 +496,10 @@ export function mockScanRegression(): Scan {
         category_score_band: "green",
       },
     ],
-    overall_score: 75.0,
-    band: "green",
+    // Equal-weight mean of (75.0, 100.0, 0.0, 100.0) = 68.8: high-end amber.
+    // Round 2 must land amber with the regression open; green is round 3.
+    overall_score: 68.8,
+    band: "amber",
     created_at: "2026-07-21T13:05:00Z",
   };
 }

@@ -38,16 +38,16 @@ Pass<->Gap is a hard fail).
 |------------|------|----------------------|--------------------------|
 | NIST AI RMF 1.0, GOVERN 1.1 | Policies and procedures for AI risk | Partial | `docs/risk-register.md`, `README.md` (register and change control exist; no incident or disclosure policy) |
 | NIST AI RMF 1.0, GOVERN 3.2 | Roles for human oversight of AI | Pass | `docs/human-review-process.md` (defined reviewer role, qualifications, authority) |
-| NIST AI RMF 1.0, MANAGE 4.1 | Post-deployment monitoring | Pass | `config/config.yaml` monitoring block, risk register R-4 (weekly distribution checks with alerting) |
+| NIST AI RMF 1.0, GOVERN 1.5 | Ongoing monitoring and review of AI risk | Pass | `config/config.yaml` monitoring block, risk register R-4 (weekly distribution checks with alerting) |
 | NIST AI RMF 1.0, MANAGE 4.3 | Incident response and communication | **Gap** | No runbook, no on-call or escalation process, no incident recording anywhere in the repo |
 
 ### ISO 42001:2023
 
 | clause_ref | Area | Expected score_value | Expected evidence anchor |
 |------------|------|----------------------|--------------------------|
-| ISO 42001:2023 Cl. 8.4.2 | Data quality for AI systems | Partial | `docs/data-quality.md` (collection and validation documented; label quality review incomplete, matches accepted risk R-5) |
+| ISO 42001:2023 A.7.4 | Data quality for AI systems | Partial | `docs/data-quality.md` (collection and validation documented; label quality review incomplete, matches accepted risk R-5) |
 | ISO 42001:2023 Cl. 9.1 | Monitoring, measurement, evaluation | Pass | `config/config.yaml`, `docs/model-card.md` performance section (monitoring cadence and offline evaluation defined) |
-| ISO 42001:2023 Cl. 10.1 | Incident response | **Gap** | No incident response documentation found in the artifact |
+| ISO 42001:2023 A.8.4 | Incident response | **Gap** | No incident response documentation found in the artifact |
 
 ## Tally check
 

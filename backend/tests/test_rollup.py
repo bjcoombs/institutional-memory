@@ -1,5 +1,5 @@
 """Unit tests for backend/rollup.py against the ScoringEngineReqs 5.3
-worked example, plus na-exclusion, risk-weighting, band, and finding-validity
+worked example, plus na-exclusion, plain-mean, band, and finding-validity
 cases.
 
 Note on the worked example's weight column: the 5.3 table pairs its rows
@@ -49,7 +49,7 @@ def worked_example():
     Risk Management (EU AI Act + ISO 42001): 6 clauses, 4 pass 1 partial 1 gap.
     Transparency (EU AI Act): 3 clauses, 2 pass 1 partial.
     Data Governance (EU AI Act + ISO 42001): 5 clauses, 2 pass 2 partial 1 gap.
-    Equal risk weights, so the risk-weighted mean equals the plain 4.2 mean.
+    Category scores are the plain 4.2 mean of the non-N/A numeric values.
     """
     spec = [
         ("Risk Management", ["EU AI Act", "ISO 42001"],
@@ -145,18 +145,20 @@ class TestNaExclusion:
         assert overall(cats) == 100.0
 
 
-class TestRiskWeighting:
-    def test_risk_weighted_category_mean(self):
+class TestPlainMean:
+    def test_risk_weight_does_not_affect_category_mean(self):
+        # risk_weight is prioritization/display metadata (ScoringEngineReqs
+        # 10.1); category score is the plain 4.2 mean regardless of weights.
         meta = {
             "F (2024), C 1": ClauseMeta("Cat", 3.0, "F"),
             "F (2024), C 2": ClauseMeta("Cat", 1.0, "F"),
         }
         findings = [
-            make_finding("F (2024), C 1", "pass"),  # weight 3
-            make_finding("F (2024), C 2", "gap"),  # weight 1
+            make_finding("F (2024), C 1", "pass"),  # risk_weight 3, ignored
+            make_finding("F (2024), C 2", "gap"),  # risk_weight 1, ignored
         ]
         (cat,) = category_scores(findings, meta)
-        assert cat.category_score_numeric == 75.0  # 300 / 4, not 50.0
+        assert cat.category_score_numeric == 50.0  # (100 + 0) / 2
 
     def test_unmapped_clause_ref_raises(self):
         with pytest.raises(KeyError):

@@ -48,7 +48,7 @@ And it found what is missing: no incident-response runbook, no
 user-facing AI disclosure. Every finding cites the actual file and the
 actual clause."
 
-**Drill into:** the ISO 42001 Cl. 10.1 incident-response Gap. Read one
+**Drill into:** the ISO 42001 A.8.4 incident-response Gap. Read one
 sentence of the justification aloud: it names what it searched for and
 found nothing. No hand-waving.
 

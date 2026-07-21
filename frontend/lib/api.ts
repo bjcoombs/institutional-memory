@@ -236,19 +236,19 @@ export async function postCopilot(
     await sleep(600);
     return {
       answer:
-        "The Credit Scoring Service is amber (56.3). Two open gaps remain: no user-facing AI disclosure (EU AI Act Article 52) and no incident-response process (ISO 42001 Clause 10.1). Human oversight and risk management both pass with cited evidence.",
+        "The Credit Scoring Service is amber (56.3). Two open gaps remain: no user-facing AI disclosure (EU AI Act Article 50) and no incident-response process (ISO 42001 Control A.8.4). Human oversight and risk management both pass with cited evidence.",
       citations: [
         {
-          label: "EU AI Act (2024), Article 52, Paragraph 1",
+          label: "EU AI Act (2024), Article 50, Paragraph 1",
           scan_id: "scan_r1",
           system_id: "sys_credit",
-          clause_ref: "EU AI Act (2024), Article 52, Paragraph 1",
+          clause_ref: "EU AI Act (2024), Article 50, Paragraph 1",
         },
         {
-          label: "ISO/IEC 42001:2023, Clause 10.1",
+          label: "ISO/IEC 42001:2023, Annex A, Control A.8.4",
           scan_id: "scan_r1",
           system_id: "sys_credit",
-          clause_ref: "ISO/IEC 42001:2023, Clause 10.1",
+          clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.8.4",
         },
       ],
       model_id: MODEL_ID,

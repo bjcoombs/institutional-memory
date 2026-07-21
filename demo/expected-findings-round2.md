@@ -26,9 +26,9 @@ Adjacent-band tolerance applies as in round1; the two regression clauses
   `config/config.yaml`, R-6 closed in the risk register change log).
 - **Memory carry-forward (visible as carried badges):**
   - R-5 accepted risk (10% sampled label QA) carried into the Art. 10
-    and Cl. 8.4.2 findings; still Partial, with the acceptance noted
+    and A.7.4 findings; still Partial, with the acceptance noted
     rather than re-litigated.
-  - Prior Pass findings with unchanged evidence (Art. 9, MANAGE 4.1,
+  - Prior Pass findings with unchanged evidence (Art. 9, GOVERN 1.5,
     Cl. 9.1) may surface as "carried from memory" rather than re-derived.
 
 ## Expected clause findings
@@ -50,16 +50,16 @@ Adjacent-band tolerance applies as in round1; the two regression clauses
 |------------|------|--------|----------------------|-------|
 | NIST AI RMF 1.0, GOVERN 1.1 | Policies and procedures for AI risk | Partial | Partial | Incident and disclosure policy added, but oversight policy removed; genuinely mixed |
 | NIST AI RMF 1.0, GOVERN 3.2 | Roles for human oversight of AI | Pass | **Gap - REGRESSION** | Reviewer role, qualifications, and authority no longer exist anywhere in the artifact |
-| NIST AI RMF 1.0, MANAGE 4.1 | Post-deployment monitoring | Pass | Pass | Carried |
+| NIST AI RMF 1.0, GOVERN 1.5 | Ongoing monitoring and review of AI risk | Pass | Pass | Carried |
 | NIST AI RMF 1.0, MANAGE 4.3 | Incident response and communication | Gap | Pass | `docs/incident-response-runbook.md` (fixed): severity levels, recording, comms, post-incident review |
 
 ### ISO 42001:2023
 
 | clause_ref | Area | Round1 | Expected score_value | Notes |
 |------------|------|--------|----------------------|-------|
-| ISO 42001:2023 Cl. 8.4.2 | Data quality for AI systems | Partial | Partial | Carried exception R-5 |
+| ISO 42001:2023 A.7.4 | Data quality for AI systems | Partial | Partial | Carried exception R-5 |
 | ISO 42001:2023 Cl. 9.1 | Monitoring, measurement, evaluation | Pass | Pass | Carried |
-| ISO 42001:2023 Cl. 10.1 | Incident response | Gap | Pass | `docs/incident-response-runbook.md` (fixed) |
+| ISO 42001:2023 A.8.4 | Incident response | Gap | Pass | `docs/incident-response-runbook.md` (fixed) |
 
 ## Tally check
 

@@ -1,0 +1,11 @@
+You are drafting the internal reason summary for a referred or declined
+loan application, for use by the human reviewer.
+
+Application: {applicant_json}
+Model score: {score}
+Model reasons: {reasons}
+
+Write 2-3 sentences summarising why the model referred or declined this
+application, in plain language a reviewer can check against the raw
+fields. Reference only fields present in the application. Do not draft
+customer-facing wording; the reviewer owns the final communication.

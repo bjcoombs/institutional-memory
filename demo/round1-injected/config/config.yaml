@@ -1,0 +1,24 @@
+# CrediSense runtime configuration.
+# Model and prompt versions are pinned; changes require CAB approval.
+
+model:
+  id: claude-sonnet-4-5
+  api_base: https://llm-gateway.internal.example
+  scoring_prompt: prompts/scoring_prompt.txt
+  adverse_action_prompt: prompts/adverse_action_prompt.txt
+  timeout_s: 20
+
+thresholds:
+  approve_min: 720
+  refer_min: 520
+
+review:
+  # Refer/decline outcomes are queued for mandatory human review.
+  # See docs/human-review-process.md.
+  require_human_review: true
+  queue: credisense-review
+  sla_hours: 24
+
+monitoring:
+  score_distribution_check: weekly
+  reference_window_days: 90

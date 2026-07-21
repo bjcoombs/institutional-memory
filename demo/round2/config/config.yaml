@@ -1,0 +1,22 @@
+# CrediSense runtime configuration (v2.0).
+# Model and prompt versions are pinned; changes require CAB approval.
+
+model:
+  id: claude-sonnet-4-5
+  api_base: https://llm-gateway.internal.example
+  scoring_prompt: prompts/scoring_prompt.txt
+  adverse_action_prompt: prompts/adverse_action_prompt.txt
+  timeout_s: 20
+
+thresholds:
+  approve_min: 720
+  refer_min: 520
+
+processing:
+  # v2.0: straight-through processing to meet the 4-hour decision SLA.
+  straight_through: true
+  decision_sla_hours: 4
+
+monitoring:
+  score_distribution_check: weekly
+  reference_window_days: 90

@@ -1,0 +1,18 @@
+# Customer-facing AI disclosure strings. Wording changes require
+# compliance review. See docs/ai-disclosure.md.
+
+application_form: >
+  We use an artificial intelligence system to help assess your
+  application. It analyses the financial information you provide to
+  produce a creditworthiness recommendation. You can ask for an
+  explanation of any decision and request that your application be
+  reconsidered. See our AI in Lending notice for details.
+
+decision_communication: >
+  This decision was made with the assistance of an artificial
+  intelligence system. The main factors that influenced the outcome are
+  listed above. You have the right to request a review and to receive a
+  meaningful explanation of how the decision was reached. To do so,
+  contact us at decisions@example.com or via your online account.
+
+notice_url: https://www.example.com/ai-in-lending

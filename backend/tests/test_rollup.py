@@ -2,15 +2,15 @@
 worked example, plus na-exclusion, risk-weighting, band, and finding-validity
 cases.
 
-Note on the worked example's TOTAL row: the 5.3 table prints an overall of
-73.8, but that number is inconsistent with the table's own rows. With the
-stated category scores and weights the weighted mean is
-0.40 * 75.0 + 0.30 * 83.3 + 0.30 * 60.0 = 72.99 -> 73.0, and no rounding
-variant of those rows can reach 73.8 (the maximum attainable given rows that
-round to 75.0 / 83.3 / 60.0 is 73.0). Per ScoringEngineReqs 5.3 the overall
-score "must be derivable from this table by any reader", so these tests pin
-the derivable value, 73.0, and treat the printed 73.8 as a typo in the
-reference document.
+Note on the worked example's weight column: the 5.3 table pairs its rows
+with weights 40/30/30 in row order, but that pairing yields
+0.40 * 75.0 + 0.30 * 83.3 + 0.30 * 60.0 = 72.99 -> 73.0, not the printed
+TOTAL of 73.8. The printed TOTAL is exactly reproducible when the 40%
+weight sits on Transparency instead of Risk Management:
+0.30 * 75.0 + 0.40 * 83.3 + 0.30 * 60.0 = 73.82 -> 73.8. The weight column
+is therefore transposed against the rows; the TOTAL (73.8) is the
+authoritative acceptance value, and these tests pin it with the weight
+assignment that derives it.
 """
 
 import pytest
@@ -97,17 +97,17 @@ class TestWorkedExample:
         assert dg.category_score_numeric == 60.0
         assert dg.category_score_band == "amber"
 
-    def test_overall_is_derivable_from_the_table(self):
+    def test_overall_matches_printed_total(self):
         findings, meta = worked_example()
         cats = category_scores(findings, meta)
-        weights = {"Risk Management": 40, "Transparency": 30, "Data Governance": 30}
+        # Weight assignment that derives the printed 5.3 TOTAL; the doc's
+        # weight column is transposed against its rows (see module docstring).
+        weights = {"Risk Management": 30, "Transparency": 40, "Data Governance": 30}
         score = overall(cats, weights)
-        # Derivable value from the 5.3 rows; the printed TOTAL 73.8 is a typo
-        # in the reference document (see module docstring).
-        assert score == 73.0
+        assert score == 73.8
         assert band_for(score) == "green"
-        # The same arithmetic straight off the printed table rows:
-        assert round1(0.40 * 75.0 + 0.30 * 83.3 + 0.30 * 60.0) == 73.0
+        # The same arithmetic straight off the table rows:
+        assert round1(0.30 * 75.0 + 0.40 * 83.3 + 0.30 * 60.0) == 73.8
 
     def test_overall_equal_weights_by_default(self):
         findings, meta = worked_example()

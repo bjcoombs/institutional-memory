@@ -1,5 +1,9 @@
 # Option 2 — Institutional Memory Agent
 
+<img src="assets/repo-qr.png" alt="QR code linking to https://github.com/bjcoombs/institutional-memory" width="180" />
+
+Scan to open this repo: https://github.com/bjcoombs/institutional-memory
+
 **Concept landed:** Memory & context engineering
 **Tech:** [Claude Managed Agents](https://platform.claude.com/docs/en/managed-agents/overview) + the [Memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool)
 **Time:** 60 minutes

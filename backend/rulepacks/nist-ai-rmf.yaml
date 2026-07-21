@@ -1,0 +1,98 @@
+id: nist-ai-rmf
+name: NIST AI Risk Management Framework (AI RMF 1.0)
+version: "1.0 (2023)"
+issuing_body: NIST
+geography_tags:
+  - US
+  - global
+clauses:
+  - clause_ref: "NIST AI RMF 1.0, GOVERN 1.1"
+    text_summary: >-
+      Legal and regulatory requirements involving AI are understood, managed,
+      and documented. The organization maintains a documented inventory of the
+      AI-relevant laws and regulations that apply to its systems and maps them
+      to internal policies and controls.
+    category_tag: Risk Management
+    risk_weight: 3
+  - clause_ref: "NIST AI RMF 1.0, GOVERN 1.5"
+    text_summary: >-
+      Ongoing monitoring and periodic review of the AI risk management process
+      and its outcomes are planned, with organizational roles and
+      responsibilities clearly defined, including the frequency of periodic
+      review.
+    category_tag: Risk Management
+    risk_weight: 2
+  - clause_ref: "NIST AI RMF 1.0, GOVERN 3.2"
+    text_summary: >-
+      Policies and procedures are in place to define and differentiate roles
+      and responsibilities for human-AI configurations and oversight of AI
+      systems, so that accountable humans are identified for oversight
+      decisions.
+    category_tag: Human Oversight
+    risk_weight: 3
+  - clause_ref: "NIST AI RMF 1.0, GOVERN 4.3"
+    text_summary: >-
+      Organizational practices are in place to enable AI testing,
+      identification of incidents, and information sharing, including channels
+      for reporting AI incidents internally and to relevant external parties.
+    category_tag: Incident Response
+    risk_weight: 2
+  - clause_ref: "NIST AI RMF 1.0, MAP 1.1"
+    text_summary: >-
+      Intended purposes, potentially beneficial uses, context-specific laws,
+      norms and expectations, and prospective settings in which the AI system
+      will be deployed are understood and documented, including assumptions and
+      limitations.
+    category_tag: Risk Management
+    risk_weight: 2
+  - clause_ref: "NIST AI RMF 1.0, MAP 2.3"
+    text_summary: >-
+      Scientific integrity and TEVV considerations are identified and
+      documented, including those related to experimental design, data
+      collection and selection (availability, representativeness, suitability),
+      system trustworthiness, and construct validation.
+    category_tag: Data Governance
+    risk_weight: 3
+  - clause_ref: "NIST AI RMF 1.0, MAP 5.1"
+    text_summary: >-
+      Likelihood and magnitude of each identified impact, both beneficial and
+      harmful, based on expected use, past uses of similar systems, public
+      incident reports, or other data, are identified and documented.
+    category_tag: Risk Management
+    risk_weight: 3
+  - clause_ref: "NIST AI RMF 1.0, MEASURE 2.8"
+    text_summary: >-
+      Risks associated with transparency and accountability are examined and
+      documented, including whether affected parties can access information
+      about system outputs and whether accountability for outcomes is
+      traceable.
+    category_tag: Transparency
+    risk_weight: 2
+  - clause_ref: "NIST AI RMF 1.0, MEASURE 2.9"
+    text_summary: >-
+      The AI model is explained, validated, and documented, and AI system
+      output is interpreted within its context of use, so that decisions
+      informed by the system can be understood and challenged.
+    category_tag: Transparency
+    risk_weight: 3
+  - clause_ref: "NIST AI RMF 1.0, MEASURE 2.10"
+    text_summary: >-
+      Privacy risk of the AI system, including its data handling practices, is
+      examined and documented, covering collection, use, retention, and
+      protection of personal data across the system lifecycle.
+    category_tag: Data Governance
+    risk_weight: 2
+  - clause_ref: "NIST AI RMF 1.0, MANAGE 2.4"
+    text_summary: >-
+      Mechanisms are in place and applied, and responsibilities are assigned
+      and understood, to supersede, disengage, or deactivate AI systems that
+      demonstrate performance or outcomes inconsistent with intended use.
+    category_tag: Human Oversight
+    risk_weight: 3
+  - clause_ref: "NIST AI RMF 1.0, MANAGE 4.3"
+    text_summary: >-
+      Incidents and errors are communicated to relevant AI actors, including
+      affected communities, and processes for tracking, responding to, and
+      recovering from incidents and errors are followed and documented.
+    category_tag: Incident Response
+    risk_weight: 3

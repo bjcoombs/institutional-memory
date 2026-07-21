@@ -94,6 +94,52 @@ def test_scan_without_system_id_registers_new_system(client: TestClient) -> None
     assert new["lifecycle_state"] == "scanned"
 
 
+def test_stub_scanner_walks_the_demo_rounds_per_system(client: TestClient) -> None:
+    """demo/DEMO-SCRIPT.md beats 3, 5 and 6: amber, then amber with carried
+    findings and a human-oversight regression, then green."""
+    system_id = client.get("/systems").json()["systems"][0]["id"]
+    frameworks = ["eu-ai-act", "iso-42001"]
+    rounds = [
+        run_scan(client, system_id=system_id, framework_ids=frameworks)
+        for _ in range(3)
+    ]
+    assert [s["band"] for s in rounds] == ["amber", "amber", "green"]
+
+    first, second, third = rounds
+    assert not any(f["memory_carry"] or f["regression_flag"] for f in first["findings"])
+
+    carried = [f for f in second["findings"] if f["memory_carry"]]
+    regressions = [f for f in second["findings"] if f["regression_flag"]]
+    assert carried, "round 2 must carry prior findings forward"
+    assert all(f["memory_carry_note"] for f in carried)
+    assert len(regressions) == 1
+    assert regressions[0]["score_value"] == "gap"
+    assert regressions[0]["regression_note"]
+    assert "Article 14" in regressions[0]["clause_ref"]  # human oversight
+    assert second["overall_score"] > first["overall_score"]
+
+    assert not any(f["regression_flag"] for f in third["findings"])
+    assert all(f["score_value"] == "pass" for f in third["findings"])
+    assert third["overall_score"] == 100.0
+
+
+def test_stub_rounds_are_tracked_per_system(client: TestClient) -> None:
+    """A second system starts its own arc at round 1, not mid-sequence."""
+    first_id = client.get("/systems").json()["systems"][0]["id"]
+    run_scan(client, system_id=first_id)
+    run_scan(client, system_id=first_id)
+    other = run_scan(client, artifact_ref="https://example.com/other at abc123")
+    assert not any(f["regression_flag"] for f in other["findings"])
+    assert not any(f["memory_carry"] for f in other["findings"])
+
+
+def test_dashboard_counts_the_stub_regression(client: TestClient) -> None:
+    system_id = client.get("/systems").json()["systems"][0]["id"]
+    run_scan(client, system_id=system_id)
+    run_scan(client, system_id=system_id)  # round 2 seeds one regression
+    assert client.get("/dashboard").json()["regression_count"] == 1
+
+
 def test_scan_rejects_unknown_framework(client: TestClient) -> None:
     resp = client.post(
         "/scans",
@@ -291,13 +337,19 @@ def test_completed_scan_rows_are_append_only(client: TestClient) -> None:
         registry.mark_scan_running(scan["id"], "rewinding")
 
 
-def test_cors_open_for_frontend_dev_server(client: TestClient) -> None:
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://localhost:3100",  # port pinned in frontend/package.json
+        "http://127.0.0.1:3100",
+        "http://localhost:3000",  # Next.js default, if -p 3100 is bypassed
+        "http://127.0.0.1:3000",
+    ],
+)
+def test_cors_open_for_frontend_dev_server(client: TestClient, origin: str) -> None:
     resp = client.options(
         "/systems",
-        headers={
-            "Origin": "http://localhost:3100",
-            "Access-Control-Request-Method": "GET",
-        },
+        headers={"Origin": origin, "Access-Control-Request-Method": "GET"},
     )
     assert resp.status_code == 200
-    assert resp.headers["access-control-allow-origin"] == "http://localhost:3100"
+    assert resp.headers["access-control-allow-origin"] == origin

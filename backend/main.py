@@ -2,12 +2,14 @@
 
 Endpoints: POST /scans (202 + poll GET /scans/{id}), GET /systems,
 GET /systems/{id}, POST /systems/{id}/lifecycle, GET /dashboard,
-POST /copilot. CORS is open for the frontend dev server on localhost:3100.
+POST /copilot. CORS is open for the frontend dev server on localhost:3100
+(the port pinned in frontend/package.json) and on Next.js's default 3000.
 
 Scanner wiring is swappable: LEAI_SCANNER=stub|live (default stub). "live"
 imports backend.scanner.run_scan (Task C); if that module is absent the app
 falls back to the deterministic stub built from the rulepacks, so the API
-works end to end with no API key.
+works end to end with no API key. The stub walks the demo round sequence per
+system (amber -> amber with memory carry and a regression -> green).
 
 Run: uvicorn backend.main:app --port 8000
 """
@@ -83,47 +85,174 @@ def clause_meta_for(framework_ids: list[str]) -> dict[str, rollup.ClauseMeta]:
 
 
 # ---------------------------------------------------------------------------
-# Stub scanner: deterministic canned Scan from the rulepacks, no API key.
+# Stub scanner: deterministic canned Scans from the rulepacks, no API key.
 # Task C's backend/scanner.py replaces this behind LEAI_SCANNER=live.
+#
+# The stub is stateful per system so stub-backend mode can play the demo arc
+# (demo/DEMO-SCRIPT.md beats 3, 5 and 6), mirroring the frontend mock
+# factories in frontend/lib/types.ts:
+#
+#   round 1  amber, a mix of pass / partial / gap, nothing carried
+#   round 2  amber, the round 1 gaps improved, prior passes carried from
+#            memory, and one human-oversight clause regressed to gap
+#   round 3+ green, every shortfall closed, regression restored, passes carried
+#
+# Round 2 deliberately stays amber: the score goes up-ish while the regression
+# alarm fires, and green has to be earned in round 3 (DEMO-SCRIPT.md beat 5).
+#
+# Round number comes from a per-system_id scan counter held by the app, so a
+# given (system, round) always produces the same scan.
 # ---------------------------------------------------------------------------
 
-# Deterministic score cycle chosen to land in the amber band with a mix of
-# result types, so the frontend has something honest-looking to render.
-_STUB_CYCLE = ["pass", "partial", "pass", "gap"]
+_STUB_NUMERIC = {"pass": 100, "partial": 50, "gap": 0}
+
+# Round 1 target per category, applied in first-seen category order across the
+# selected rulepacks. Scoring a whole category uniformly keeps the demo bands
+# reproducible for any framework selection: with equal category weights the
+# overall score is just the mean of these targets, so round 1 lands amber for
+# every rulepack combination (each pack carries five or more categories).
+_STUB_ROUND_1_CATEGORY_CYCLE = ["gap", "pass", "partial", "partial"]
+
+# The category the stub regresses in round 2 - Human Oversight is the demo
+# beat. It is pinned to pass in round 1 (a clause never established cannot
+# regress) and restored in round 3.
+_REGRESSION_CATEGORY = "Human Oversight"
+
+
+def _stub_categories(framework_ids: list[str]) -> list[str]:
+    """Category tags in first-seen rulepack order, deduplicated."""
+    seen: list[str] = []
+    for fid in framework_ids:
+        for clause in RULEPACKS[fid]["clauses"]:
+            if clause["category_tag"] not in seen:
+                seen.append(clause["category_tag"])
+    return seen
+
+
+def _stub_category_targets(framework_ids: list[str], round_number: int) -> dict[str, str]:
+    """category_tag -> score_value for the given demo round.
+
+    Round 1 walks the cycle; round 2 lifts every round 1 gap to partial (real
+    progress, still short of green); round 3 passes everything.
+    """
+    if round_number >= 3:
+        return {category: "pass" for category in _stub_categories(framework_ids)}
+    targets: dict[str, str] = {}
+    ordinal = 0
+    for category in _stub_categories(framework_ids):
+        if category == _REGRESSION_CATEGORY:
+            targets[category] = "pass"
+            continue
+        target = _STUB_ROUND_1_CATEGORY_CYCLE[ordinal % len(_STUB_ROUND_1_CATEGORY_CYCLE)]
+        ordinal += 1
+        if round_number >= 2 and target == "gap":
+            target = "partial"
+        targets[category] = target
+    return targets
+
+
+def _stub_regression_clause_ref(framework_ids: list[str]) -> str | None:
+    """Clause the stub regresses in round 2, preferring Human Oversight. Falls
+    back to the first clause of the selection if no oversight clause is in
+    scope, so the demo beat still fires."""
+    clauses = [clause for fid in framework_ids for clause in RULEPACKS[fid]["clauses"]]
+    for clause in clauses:
+        if clause["category_tag"] == _REGRESSION_CATEGORY:
+            return clause["clause_ref"]
+    return clauses[0]["clause_ref"] if clauses else None
+
+
+def _stub_finding(
+    clause: dict,
+    round_number: int,
+    target: str,
+    round_1_target: str,
+    is_regression_clause: bool,
+) -> ClauseFinding:
+    """One canned finding for the given clause and demo round."""
+    score_value = target
+    memory_carry = False
+    memory_carry_note = None
+    regression_flag = False
+    regression_note = None
+
+    if round_number == 1:
+        note = "First scan of this system: no prior findings to reconcile against."
+    elif round_number == 2 and is_regression_clause:
+        score_value = "gap"
+        regression_flag = True
+        regression_note = (
+            "Previously pass in the round 1 stub scan; the supporting control "
+            "is no longer present in the artifact and no replacement was "
+            "found. Stub regression seeded for the demo arc."
+        )
+        note = "Regression: the prior evidence for this clause has been removed."
+    elif round_1_target == "pass":
+        memory_carry = True
+        memory_carry_note = (
+            "Established as pass in the round 1 stub scan; no contradicting "
+            "change has appeared in the artifact since."
+        )
+        note = "Carried forward from memory rather than re-litigated."
+    elif round_number == 2:
+        note = "Progress since round 1, with work still outstanding."
+    else:
+        if is_regression_clause:
+            note = (
+                "The control removed in round 2 has been restored, clearing "
+                "the regression."
+            )
+        else:
+            note = "The round 1 shortfall for this clause has been closed."
+
+    has_evidence = score_value != "gap"
+    return ClauseFinding(
+        clause_ref=clause["clause_ref"],
+        clause_text_summary=clause["text_summary"],
+        score_value=score_value,  # type: ignore[arg-type]
+        numeric_value=_STUB_NUMERIC[score_value],
+        evidence_excerpt=(
+            "Stub evidence: no artifact was read (stub scanner)."
+            if has_evidence
+            else None
+        ),
+        evidence_location="stub://no-artifact" if has_evidence else None,
+        justification=(
+            f"Stub finding for demo wiring: {clause['clause_ref']} assessed as "
+            f"{score_value} by the canned scanner in round {round_number}. "
+            f"{note} Replace with backend.scanner (LEAI_SCANNER=live) for real "
+            "assessments."
+        ),
+        confidence="low",
+        memory_carry=memory_carry,
+        memory_carry_note=memory_carry_note,
+        regression_flag=regression_flag,
+        regression_note=regression_note,
+    )
 
 
 def build_stub_scan(
-    scan_id: str, artifact_ref: str, framework_ids: list[str], system_id: str
+    scan_id: str,
+    artifact_ref: str,
+    framework_ids: list[str],
+    system_id: str,
+    round_number: int = 1,
 ) -> Scan:
+    """Canned Scan for the given demo round (1, 2, 3+ as described above)."""
+    targets = _stub_category_targets(framework_ids, round_number)
+    round_1_targets = _stub_category_targets(framework_ids, 1)
+    regression_clause_ref = _stub_regression_clause_ref(framework_ids)
     findings: list[ClauseFinding] = []
     for fid in framework_ids:
-        pack = RULEPACKS[fid]
-        for index, clause in enumerate(pack["clauses"]):
-            score_value = _STUB_CYCLE[index % len(_STUB_CYCLE)]
-            has_evidence = score_value != "gap"
+        for clause in RULEPACKS[fid]["clauses"]:
+            category = clause["category_tag"]
             findings.append(
-                ClauseFinding(
-                    clause_ref=clause["clause_ref"],
-                    clause_text_summary=clause["text_summary"],
-                    score_value=score_value,  # type: ignore[arg-type]
-                    numeric_value={"pass": 100, "partial": 50, "gap": 0}[score_value],
-                    evidence_excerpt=(
-                        "Stub evidence: no artifact was read (stub scanner)."
-                        if has_evidence
-                        else None
-                    ),
-                    evidence_location="stub://no-artifact" if has_evidence else None,
-                    justification=(
-                        f"Stub finding for demo wiring: {clause['clause_ref']} "
-                        f"assessed as {score_value} by the canned scanner. "
-                        "Replace with backend.scanner (LEAI_SCANNER=live) for "
-                        "real assessments."
-                    ),
-                    confidence="low",
-                    memory_carry=False,
-                    memory_carry_note=None,
-                    regression_flag=False,
-                    regression_note=None,
+                _stub_finding(
+                    clause,
+                    round_number,
+                    targets[category],
+                    round_1_targets[category],
+                    clause["clause_ref"] == regression_clause_ref,
                 )
             )
     meta = clause_meta_for(framework_ids)
@@ -135,7 +264,9 @@ def build_stub_scan(
         artifact_ref=artifact_ref,
         model_id=MODEL_ID,
         framework_versions={fid: str(RULEPACKS[fid]["version"]) for fid in framework_ids},
-        system_profile="Stub profile: canned scan, artifact not read.",
+        system_profile=(
+            f"Stub profile: canned scan (round {round_number}), artifact not read."
+        ),
         findings=findings,
         category_scores=categories,
         overall_score=overall_score,
@@ -209,6 +340,8 @@ def seed_demo_system(registry: Registry) -> None:
 def create_app(db_url: str | None = None) -> FastAPI:
     registry = Registry(db_url or os.environ.get("LEAI_DB", "sqlite:///backend/leai.db"))
     seed_demo_system(registry)
+    # system_id -> stub scans run so far, driving the demo round sequence.
+    stub_rounds: dict[str, int] = {}
     scanner_mode, live_run_scan = select_scanner()
     copilot_mode, live_answerer = select_copilot()
     memory_store = select_memory_store()
@@ -221,7 +354,14 @@ def create_app(db_url: str | None = None) -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3100", "http://127.0.0.1:3100"],
+        allow_origins=[
+            "http://localhost:3100",
+            "http://127.0.0.1:3100",
+            # Next.js default port, in case the frontend is started without
+            # the pinned -p 3100 from frontend/package.json.
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -249,7 +389,11 @@ def create_app(db_url: str | None = None) -> FastAPI:
                 # Registry assigns the id; the scanner may not know it.
                 scan = scan.model_copy(update={"id": scan_id, "system_id": system_id})
             else:
-                scan = build_stub_scan(scan_id, artifact_ref, framework_ids, system_id)
+                round_number = stub_rounds.get(system_id, 0) + 1
+                stub_rounds[system_id] = round_number
+                scan = build_stub_scan(
+                    scan_id, artifact_ref, framework_ids, system_id, round_number
+                )
             registry.complete_scan(scan)
         except Exception as exc:  # scan aborted entirely -> 500 scan_failed on poll
             registry.fail_scan(scan_id, str(exc))

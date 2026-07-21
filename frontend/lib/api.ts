@@ -70,6 +70,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const mockScanSequence = [mockScanRound1, mockScanRegression, mockScanGreen];
 let mockScanCursor = 0;
 const mockScanStore = new Map<string, Scan>();
+
+// Every mock scan id maps to its own factory, so a page reload or a direct
+// link to /scans/scan_r2 mid-demo rebuilds that round rather than round 1.
+const mockScanFactories: Record<string, () => Scan> = {
+  scan_r1: mockScanRound1,
+  scan_r2: mockScanRegression,
+  scan_r3: mockScanGreen,
+};
 let mockSystemsStore: System[] | null = null;
 
 function mockSystemsState(): System[] {
@@ -110,7 +118,9 @@ export type ScanResult =
 export async function getScan(scanId: string): Promise<ScanResult> {
   if (MOCK_MODE) {
     await sleep(200);
-    const scan = mockScanStore.get(scanId) ?? mockScanRound1();
+    const scan =
+      mockScanStore.get(scanId) ??
+      (mockScanFactories[scanId] ?? mockScanRound1)();
     return { done: true, scan };
   }
   const body = await request<Scan | ScanPendingResponse>(`/scans/${scanId}`);

@@ -9,6 +9,39 @@ Fixtures: `demo/round1/` (CrediSense v1), `demo/round2/` (CrediSense
 v2.0 with the seeded oversight regression). Answer keys:
 `demo/expected-findings-round1.md`, `demo/expected-findings-round2.md`.
 
+## Setup
+
+Pick one mode before you present. Paths are relative to the repo root.
+
+**Mock mode (default, recommended): frontend only, zero backend, no API
+key.** The full eight-beat arc plays from the built-in mock scans.
+
+```bash
+cd frontend && npm install && npm run dev    # serves on port 3100
+```
+
+**Stub-backend mode: real API + registry, canned scanner, no API key.**
+The stub scanner walks the same demo rounds per system (amber, then
+amber with memory carry and a regression, then green).
+
+```bash
+# terminal 1
+pip install -r backend/requirements.txt
+LEAI_SCANNER=stub uvicorn backend.main:app --port 8000
+# terminal 2
+cd frontend && NEXT_PUBLIC_MOCK_MODE=false npm run dev
+```
+
+**Live mode: real Claude scoring.** As stub-backend mode, but export
+`ANTHROPIC_API_KEY=...` and use `LEAI_SCANNER=live`. Scores come from
+`claude-sonnet-5`; expect each scan to take noticeably longer than the
+canned modes and rehearse at least once for variance.
+
+The frontend is pinned to port 3100 (`frontend/package.json`); the
+backend allows CORS from ports 3100 and 3000. If a page ever loses its
+styling after a fresh install, run
+`npm rebuild lightningcss @tailwindcss/oxide` and delete `.next`.
+
 ## Beat 1: Day zero
 
 **Click:** Open the Leadership Dashboard.

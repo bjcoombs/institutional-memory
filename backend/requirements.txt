@@ -1,0 +1,9 @@
+fastapi
+pydantic>=2
+sqlalchemy
+anthropic
+pyyaml
+jsonschema
+pytest
+httpx
+uvicorn

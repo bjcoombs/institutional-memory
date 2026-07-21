@@ -1,0 +1,128 @@
+# Framework rulepack: EU AI Act (Regulation (EU) 2024/1689)
+# 12 curated clauses selected for demo credibility. Clause references cite real
+# articles and paragraphs of the published regulation.
+# Field names follow ScoringEngineReqs.md section 10.1; clause_ref format
+# follows section 6.2. risk_weight scale: 1 (low) to 3 (high).
+
+id: eu-ai-act
+name: EU Artificial Intelligence Act
+version: "2024 (Regulation (EU) 2024/1689)"
+issuing_body: European Union
+geography_tags:
+  - EU
+  - EEA
+clauses:
+  - clause_ref: "EU AI Act (2024), Article 9, Paragraph 1"
+    text_summary: >-
+      A risk management system must be established, implemented, documented and
+      maintained in relation to high-risk AI systems, running as a continuous
+      iterative process throughout the entire lifecycle of the system, with
+      regular systematic review and updating.
+    category_tag: Risk Management
+    risk_weight: 3
+
+  - clause_ref: "EU AI Act (2024), Article 9, Paragraph 2"
+    text_summary: >-
+      The risk management process must identify and analyse the known and
+      reasonably foreseeable risks the system can pose to health, safety or
+      fundamental rights when used in accordance with its intended purpose,
+      estimate risks under reasonably foreseeable misuse, and adopt appropriate
+      and targeted risk management measures.
+    category_tag: Risk Management
+    risk_weight: 3
+
+  - clause_ref: "EU AI Act (2024), Article 10, Paragraph 2"
+    text_summary: >-
+      Training, validation and testing data sets must be subject to data
+      governance and management practices appropriate for the intended purpose,
+      covering design choices, data collection processes and origin of data,
+      data preparation, assumptions about what the data measures, and an
+      examination of possible biases likely to affect health, safety or
+      fundamental rights.
+    category_tag: Data Governance
+    risk_weight: 3
+
+  - clause_ref: "EU AI Act (2024), Article 10, Paragraph 3"
+    text_summary: >-
+      Training, validation and testing data sets must be relevant, sufficiently
+      representative, and to the best extent possible free of errors and
+      complete in view of the intended purpose, with statistical properties
+      appropriate to the persons or groups on whom the system is intended to be
+      used.
+    category_tag: Data Governance
+    risk_weight: 3
+
+  - clause_ref: "EU AI Act (2024), Article 11, Paragraph 1"
+    text_summary: >-
+      Technical documentation for a high-risk AI system must be drawn up before
+      the system is placed on the market or put into service and kept up to
+      date, demonstrating compliance with the requirements of Chapter III
+      Section 2 and containing at minimum the elements set out in Annex IV.
+    category_tag: Transparency
+    risk_weight: 2
+
+  - clause_ref: "EU AI Act (2024), Article 12, Paragraph 1"
+    text_summary: >-
+      High-risk AI systems must technically allow for the automatic recording
+      of events (logs) over the lifetime of the system, so that situations
+      presenting risk and substantial modifications can be identified and
+      post-market monitoring supported.
+    category_tag: Accountability
+    risk_weight: 2
+
+  - clause_ref: "EU AI Act (2024), Article 13, Paragraph 1"
+    text_summary: >-
+      High-risk AI systems must be designed and developed so that their
+      operation is sufficiently transparent to enable deployers to interpret a
+      system's output and use it appropriately, with an appropriate type and
+      degree of transparency to achieve compliance with provider and deployer
+      obligations.
+    category_tag: Transparency
+    risk_weight: 3
+
+  - clause_ref: "EU AI Act (2024), Article 14, Paragraph 1"
+    text_summary: >-
+      High-risk AI systems must be designed and developed, including with
+      appropriate human-machine interface tools, so that they can be
+      effectively overseen by natural persons during the period in which they
+      are in use.
+    category_tag: Human Oversight
+    risk_weight: 3
+
+  - clause_ref: "EU AI Act (2024), Article 15, Paragraph 1"
+    text_summary: >-
+      High-risk AI systems must be designed and developed to achieve an
+      appropriate level of accuracy, robustness and cybersecurity, and to
+      perform consistently in those respects throughout their lifecycle.
+    category_tag: Robustness
+    risk_weight: 3
+
+  - clause_ref: "EU AI Act (2024), Article 26, Paragraph 5"
+    text_summary: >-
+      Deployers must monitor the operation of the high-risk AI system on the
+      basis of the instructions for use and, where relevant, inform providers;
+      where use may result in a risk within the meaning of Article 79(1), they
+      must without undue delay inform the provider or distributor and the
+      relevant market surveillance authority and suspend use of the system.
+    category_tag: Human Oversight
+    risk_weight: 2
+
+  - clause_ref: "EU AI Act (2024), Article 72, Paragraph 1"
+    text_summary: >-
+      Providers must establish and document a post-market monitoring system in
+      a manner proportionate to the nature of the AI technologies and the risks
+      of the high-risk AI system, actively and systematically collecting and
+      analysing relevant data on the system's performance throughout its
+      lifetime.
+    category_tag: Incident Response
+    risk_weight: 2
+
+  - clause_ref: "EU AI Act (2024), Article 73, Paragraph 1"
+    text_summary: >-
+      Providers of high-risk AI systems placed on the Union market must report
+      any serious incident to the market surveillance authorities of the Member
+      States where the incident occurred, within the deadlines set out in
+      Article 73 and with an established process for investigation and
+      follow-up.
+    category_tag: Incident Response
+    risk_weight: 3

@@ -225,13 +225,108 @@ v1 deliberately scores clauses via direct agent judgment rather than a separate 
 - The tradeoff, stated honestly: scores are not guaranteed byte-reproducible run-to-run. This is mitigated by (a) every finding carrying a stated rationale and citation, (b) the eval suite (Section 11) grading against a human answer key rather than exact-match, and (c) every scan record storing its full inputs (artifact reference, framework versions, full agent output) for audit and re-review.
 - A deterministic rule engine remains a plausible v2 direction once framework coverage and obligation taxonomies stabilize — it is not ruled out, just not a v1 requirement.
 
-## 10. Correctness and Evals
+## 10. Correctness, Reliability and Evals
 
-- **Schemas at the boundaries**: system profiles, clause findings, scan records, and copilot citations all validate against published schemas.
-- **Scan eval suite**: a set of seeded artifacts (repos and documents) with a human-graded answer key for expected findings. The suite runs in CI; a grading regression fails the build. This is the product's honesty check given judged (not deterministic) scoring.
-- **Memory-sharpness eval**: the same question or scan re-run before and after a seeded material change, graded for whether the second answer correctly reflects the change (carry-forward or regression, as appropriate).
-- **Copilot evals**: memory-isolation test (facts seeded for system A never surface for system B) and contradiction flag-and-ask test, automated against a seeded instance.
-- **Error handling principle**: nothing silent. Failed scans are visible failures. Partial coverage is labeled. Missing data in copilot answers is stated as missing, not glossed over.
+Scoring is LLM-judged (Section 9), so this section is the product's honesty check. Everything here is testable in CI against a seeded instance; one seeded case per behavior is sufficient for v1 - the point is that the case exists and gates the build.
+
+### 10.1 Schemas at the boundaries
+
+System profiles, clause findings, scan records, and copilot citations all validate against published schemas. Validation is mechanical, at write time, before anything reaches the scan record.
+
+### 10.2 Scan eval suite and coverage
+
+A set of seeded artifacts with a human-graded answer key for expected findings. The suite runs in CI; a grading regression fails the build.
+
+- Seeded cases cover **every supported artifact type** - Git repository, linked document, and uploaded file (PDF, Word, and plain text each represented, since uploads exercise a distinct parsing path and evidence-location format) - and **all three fully-authored frameworks** (EU AI Act, NIST AI RMF, ISO/IEC 42001).
+- CI reports coverage as an artifact-type x framework grid and fails on an empty cell.
+- A new supported artifact format, or a newly authored scorable framework, requires answer-keyed eval cases before it is enabled for users.
+
+### 10.3 Answer key construction and maintenance
+
+- Each answer-key entry is authored by a framework-literate grader and independently reviewed by a second grader. Disagreements are resolved before the entry lands; the resolution is recorded with it.
+- Every entry records author, reviewer, framework version, and rationale.
+- The key is versioned alongside the framework reference data it grades against. A framework version bump requires a review-and-update pass over every affected entry before the suite may run against the new version.
+
+### 10.4 Grading rubric and pass thresholds
+
+"Grading regression" is defined, not vibes:
+
+- Per finding: exact score-value match = 1.0; adjacent-band match (e.g. Partial vs Pass) = 0.5; opposite-band or N/A-vs-scored mismatch = 0. Justification and citation quality are graded separately against the standards in the scoring engine spec (§3.4, §6.1).
+- CI passes only when (a) aggregate finding-match rate ≥ 90%, (b) no eval case grades lower than the previous release baseline, and (c) zero cases produce a missed regression flag or a fabricated citation.
+- Thresholds live in versioned eval-suite configuration in the repo, not in anyone's head.
+
+### 10.5 Grader independence
+
+- Score-value and citation-location matching against the key is performed **mechanically**, never by an LLM.
+- Where an LLM judge grades free-text dimensions (justification quality), it runs with a distinct prompt, never sees the scoring agent's confidence or rationale before forming its own read of the evidence, and is itself validated: a sample of judge verdicts per release (10%, minimum 20 cases) is human-audited, and judge-human agreement below a stated threshold blocks that judge version from gating.
+
+### 10.6 Run-to-run variance bounds
+
+Section 9 concedes scores are not byte-reproducible; this section bounds the concession.
+
+- The suite runs each seeded case at least 3 times with identical inputs (5 for release gating) and reports clause-finding flip rate, overall-score spread, and band-change rate.
+- CI fails if any identical-input case changes overall score band, if score spread exceeds 5 points, or if the clause flip rate exceeds the configured maximum. Variance is recorded per release so drift across model or prompt changes is trendable.
+
+### 10.7 Confidence calibration
+
+Low confidence is the trigger for human review (scoring engine spec §3.5), so confidence labels must track error rate: High-confidence error rate ≤ 5% and strictly below the Medium-confidence error rate, and cases the answer key marks as genuinely ambiguous land in Review Required in a stated fraction of runs. Calibration failures fail CI on the same terms as accuracy failures.
+
+### 10.8 Eval-set governance and the override feedback loop
+
+- Eval cases change only via reviewed change, at the same review bar as the answer key. Each case records its origin: authored, or derived from a production incident.
+- Every human override of an agent finding, and every confirmed scoring mistake found in deployment, is triaged within a stated period; confirmed agent errors become a minimal reproducing eval case with a corrected key entry.
+- Regression cases are never deleted, only superseded with recorded justification.
+
+### 10.9 Memory-sharpness eval
+
+The same question or scan re-run before and after a seeded material change, graded for whether the second answer correctly reflects the change (carry-forward or regression, as appropriate).
+
+### 10.10 Copilot evals
+
+Memory-isolation test (facts seeded for system A never surface for system B) and contradiction flag-and-ask test, automated against a seeded instance.
+
+### 10.11 Model version pinning
+
+- Each deployment pins an exact model ID (not a family alias) for both agents. Every scan record and copilot answer stores the model ID used; it appears in the scan report header.
+- A model version change is an explicit, audited configuration event: the full scan eval suite must pass on the candidate model before activation, and prior scans are flagged "scored under a previous model version" in Scan History, analogous to the framework-version-bump flag. The system never upgrades the model implicitly.
+
+### 10.12 Evidence-excerpt verification
+
+Before a finding is committed, a deterministic (non-LLM) validator confirms every quoted `evidence_excerpt` appears verbatim in the referenced artifact at the stated `evidence_location` (exact substring match after whitespace normalization; within the cited file and line range for repos). A failed excerpt is treated as malformed: it contributes to no aggregate, the clause is re-derived per 10.13, and the failure is logged to the audit trail. The eval suite includes a seeded fabricated-excerpt case confirming rejection. This is a data-integrity check, not the cut rule engine - it judges nothing, it verifies quotes exist.
+
+### 10.13 Malformed-finding handling and retry
+
+- A finding that fails schema validation or the malformed-finding check is re-derived up to N times (default 2), each attempt logged to the audit trail.
+- If all attempts fail, the clause is recorded as **unscored - system error** - never as Gap, N/A, or silently omitted - and excluded from category averages exactly as N/A is. The scan is marked incomplete with unscored clauses listed and counted in the report. Zero unscored clauses is a precondition for `complete` status.
+
+### 10.14 Atomic scan commitment and mid-scan API failure
+
+- Scan commitment is atomic: clause findings, memory writes, registry updates, and dashboard pushes land only after every selected clause has a validated finding or a logged unscored outcome.
+- On a model API failure mid-scan, the engine retries with backoff up to a configured limit; if the scan cannot complete, it terminates as a visible failure with reason and progress point recorded, no partial score is recorded, and no memory or registry writes from the aborted scan persist. An aborted scan is restartable without duplicate effects.
+
+### 10.15 Nondeterminism disclosure in the product
+
+- Every scan report header and score display carries a standing disclosure: scores are produced by AI judgment against the cited evidence, and re-running the same scan may yield differences in individual findings; the citation-and-rationale chain and human override are the authoritative recourse.
+- The scoring engine spec's reproducibility claim (§5.1) is narrowed to the aggregation arithmetic given a fixed set of clause findings - not the findings themselves.
+- A score-band change on rescan of an unchanged artifact is surfaced in the delta view as **judgment variance**, never a silent replacement.
+
+### 10.16 Artifact content is data, never instructions
+
+The scanner's entire input channel is untrusted. The scanning agent treats all artifact content - files, document text, uploads, filenames, metadata, commit messages - as evidence to be judged, never as instructions to be followed. Text that addresses the agent or attempts to alter scoring, suppress findings, modify memory, or change output format must not influence any finding, score, memory operation, or report content, regardless of where it appears (comments, hidden text, white-on-white PDF layers, READMEs). The eval suite includes at least one seeded injection artifact per artifact type, graded for unchanged findings.
+
+### 10.17 Manipulation attempts are surfaced, not just resisted
+
+An artifact that tries to manipulate its own compliance score is itself risk evidence. Detected manipulation content produces a distinct **Manipulation Attempt Detected** flag in the scan report - identifying the location and quoting the suspect content - is written to the append-only audit trail, and marks the scan for human review. A silently-succeeding unflagged score on a seeded injection case fails the eval.
+
+### 10.18 Memory provenance and poisoning protection
+
+- Every memory record carries a provenance field: explicit human confirmation, artifact-derived inference, or agent synthesis. Memory-carried findings record the provenance of the fact they rely on.
+- Organization-level exceptions and risk-tier justifications that would flip clauses to Pass or N/A on future scans are never committed to durable memory on artifact evidence alone: they enter **pending human confirmation** (surfaced in the Memory Update Log) and do not influence scoring until confirmed.
+- Copilot-originated facts carry conversation-source provenance and cannot establish or modify scoring-relevant exceptions without an explicit confirmation step attributed to a named governance-editor user in the audit log. Quoted or pasted third-party content inside a copilot question is untrusted data, under the same rule as artifact content. One seeded poisoning case per channel (scan, copilot) verifies the unconfirmed fact does not change a finding.
+
+### 10.19 Error handling principle
+
+Nothing silent. Failed scans are visible failures. Partial coverage is labeled. Unscored clauses are counted. Missing data in copilot answers is stated as missing, not glossed over.
 
 ## 11. Design Principles
 

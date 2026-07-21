@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -262,12 +264,22 @@ def test_copilot_grounded_answer_cites_scan(client: TestClient) -> None:
 def test_live_scanner_falls_back_to_stub_when_module_missing(
     tmp_path, monkeypatch
 ) -> None:
+    # Simulate backend/scanner.py being unimportable: a None entry in
+    # sys.modules makes ``from backend.scanner import run_scan`` raise
+    # ImportError, so the app must fall back to the stub scanner.
     monkeypatch.setenv("LEAI_SCANNER", "live")
+    monkeypatch.setitem(sys.modules, "backend.scanner", None)
     app = create_app(db_url=f"sqlite:///{tmp_path}/live.db")
-    assert app.state.scanner_mode == "stub"  # backend/scanner.py absent
+    assert app.state.scanner_mode == "stub"
     with TestClient(app) as client:
         scan = run_scan(client)
         assert scan["status"] == "complete"
+
+
+def test_live_scanner_selected_when_module_present(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("LEAI_SCANNER", "live")
+    app = create_app(db_url=f"sqlite:///{tmp_path}/live2.db")
+    assert app.state.scanner_mode == "live"  # backend/scanner.py is importable
 
 
 def test_completed_scan_rows_are_append_only(client: TestClient) -> None:

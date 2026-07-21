@@ -1,0 +1,48 @@
+# Evals-lite CI (leai-spec section 10; hackathon plan Task K).
+#
+# The python job runs the unit suite plus the eval gates in
+# backend/tests/test_evals.py. The two gates that need live Claude calls skip
+# themselves when ANTHROPIC_API_KEY is unset, so a fork or a repo without the
+# secret still gets a green build from the deterministic suite (including the
+# fabricated-excerpt gate). Add the ANTHROPIC_API_KEY secret to arm the
+# answer-key and injection gates.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+      - name: Run pytest (unit suite + eval gates)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m pytest backend/tests -v
+
+  node:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build

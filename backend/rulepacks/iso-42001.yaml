@@ -1,0 +1,117 @@
+# Framework rulepack: ISO/IEC 42001:2023 (AI management system)
+# 12 curated clauses selected for demo credibility. Clause references cite real
+# clause and Annex A control numbers from the published standard.
+# Field names follow ScoringEngineReqs.md section 10.1; clause_ref format
+# follows section 6.2. risk_weight scale: 1 (low) to 3 (high).
+
+id: iso-42001
+name: ISO/IEC 42001 Artificial Intelligence Management System
+version: "2023"
+issuing_body: ISO/IEC
+geography_tags:
+  - global
+clauses:
+  - clause_ref: "ISO/IEC 42001:2023, Clause 6.1.2"
+    text_summary: >-
+      The organization must define and apply an AI risk assessment process that
+      identifies risks to individuals, the organization, and society arising
+      from the development and use of AI systems, with criteria for analysing
+      and evaluating those risks and producing consistent, comparable results.
+    category_tag: risk_management
+    risk_weight: 3
+
+  - clause_ref: "ISO/IEC 42001:2023, Clause 6.1.4"
+    text_summary: >-
+      The organization must perform an AI system impact assessment that
+      evaluates the potential consequences of the AI system for individuals,
+      groups of individuals, and society throughout its life cycle, and retain
+      documented results of the assessment.
+    category_tag: risk_management
+    risk_weight: 3
+
+  - clause_ref: "ISO/IEC 42001:2023, Clause 9.1"
+    text_summary: >-
+      The organization must determine what needs to be monitored and measured
+      for the AI management system, the methods for monitoring, measurement,
+      analysis and evaluation, when they are performed, and must retain
+      documented evidence of the results.
+    category_tag: accountability
+    risk_weight: 2
+
+  - clause_ref: "ISO/IEC 42001:2023, Clause 10.2"
+    text_summary: >-
+      When a nonconformity occurs, the organization must react to it, take
+      action to control and correct it, evaluate the need for action to
+      eliminate its root cause so it does not recur, and retain documented
+      evidence of the nonconformity and the corrective actions taken.
+    category_tag: incident_response
+    risk_weight: 2
+
+  - clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.2.2"
+    text_summary: >-
+      The organization must document a policy for the development or use of AI
+      systems, approved by management, that provides a framework for setting AI
+      objectives and commitments to meeting applicable requirements.
+    category_tag: accountability
+    risk_weight: 2
+
+  - clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.3.2"
+    text_summary: >-
+      Roles and responsibilities for AI must be defined and allocated according
+      to the needs of the organization, so that accountability for AI system
+      development, deployment, and oversight rests with identified persons.
+    category_tag: human_oversight
+    risk_weight: 2
+
+  - clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.6.2.6"
+    text_summary: >-
+      The organization must define and document the necessary elements for the
+      ongoing operation of the AI system, including monitoring of performance,
+      human oversight arrangements, and criteria for repair, update, and
+      support after deployment.
+    category_tag: human_oversight
+    risk_weight: 3
+
+  - clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.6.2.8"
+    text_summary: >-
+      The organization must determine at which phases of the AI system life
+      cycle record keeping of event logs should be enabled, and keep logs
+      sufficient to support traceability and investigation of the system's
+      behaviour.
+    category_tag: transparency
+    risk_weight: 2
+
+  - clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.7.4"
+    text_summary: >-
+      The organization must define and document requirements for data quality
+      and ensure that data used to develop and operate the AI system meets
+      those requirements, covering properties relevant to the system's
+      intended purpose.
+    category_tag: data_governance
+    risk_weight: 3
+
+  - clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.7.5"
+    text_summary: >-
+      The organization must define and document a process for recording the
+      provenance of data used in its AI systems over the life cycles of the
+      data and the AI system, so the origin and history of training and input
+      data can be verified.
+    category_tag: data_governance
+    risk_weight: 2
+
+  - clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.8.2"
+    text_summary: >-
+      The organization must determine and provide the necessary information
+      for users of the AI system, including its purpose, intended use,
+      capabilities, and limitations, so that users can understand and
+      appropriately interpret the system's outputs.
+    category_tag: transparency
+    risk_weight: 3
+
+  - clause_ref: "ISO/IEC 42001:2023, Annex A, Control A.8.4"
+    text_summary: >-
+      The organization must determine and document a plan for communicating
+      incidents involving the AI system to users and other interested parties,
+      including what is reported, to whom, and within what timeframe.
+    category_tag: incident_response
+    risk_weight: 3

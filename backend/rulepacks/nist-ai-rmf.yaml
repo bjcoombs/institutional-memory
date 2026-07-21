@@ -1,3 +1,11 @@
+# Framework rulepack: NIST AI Risk Management Framework 1.0 (2023)
+# 12 curated clauses selected for demo credibility. Clause references cite real
+# GOVERN/MAP/MEASURE/MANAGE subcategory IDs from the published framework.
+# Field names follow ScoringEngineReqs.md section 10.1; clause_ref format
+# follows section 6.2. risk_weight scale: 1 (low) to 3 (high).
+# category_tag values are Title Case display names shared across all rulepacks
+# (they feed the cross-framework category union and dashboard rollup).
+
 id: nist-ai-rmf
 name: NIST AI Risk Management Framework (AI RMF 1.0)
 version: "1.0 (2023)"
